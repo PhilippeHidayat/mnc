@@ -6,11 +6,53 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
+type UpdateProfileRequest struct {
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
+	Address   string `json:"address" binding:"required"`
+}
+
 func UpdateProfileHandler(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "User profile updated successfully",
+	var req UpdateProfileRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "User ID not found"})
+		return
+	}
+	var userIDUUID, _ = uuid.Parse(userID.(string))
+
+	user := &models.User{
+		UserID:    userIDUUID,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Address:   req.Address,
+	}
+	user.BeforeUpdate()
+
+	_, err := db.DB.Model(user).Where("user_id = ?", user.UserID).Update()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update profile"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "SUCCESS",
+		"result": gin.H{
+			"user_id":      user.UserID,
+			"first_name":   user.FirstName,
+			"last_name":    user.LastName,
+			"address":      user.Address,
+			"updated_date": user.UpdatedAt,
+		},
 	})
 }
 

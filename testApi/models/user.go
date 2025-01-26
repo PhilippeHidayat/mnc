@@ -3,7 +3,6 @@ package models
 import (
 	"time"
 
-	"github.com/go-pg/pg/v10"
 	"github.com/google/uuid"
 )
 
@@ -23,7 +22,7 @@ func (u *User) BeforeInsert() error {
 	return nil
 }
 
-func (u *User) BeforeUpdate(db *pg.DB) error {
+func (u *User) BeforeUpdate() error {
 	u.UpdatedAt = time.Now()
 	return nil
 }

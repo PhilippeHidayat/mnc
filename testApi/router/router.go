@@ -17,11 +17,17 @@ func SetupRouter() *gin.Engine {
 
 	router.POST("/register", handlers.RegisterHandler)
 	router.POST("/login", handlers.LoginHandler)
-	router.POST("/topup", handlers.TopUpHandler)
-	router.POST("/payment", handlers.PaymentHandler)
-	router.POST("/transfer", handlers.TransferHandler)
-	router.GET("/transaction-report", handlers.TransactionReportHandler)
-	router.PUT("/update-profile", handlers.UpdateProfileHandler)
+
+	// Protected routes
+	protected := router.Group("/")
+	protected.Use(handlers.AuthMiddleware())
+	{
+		protected.POST("/topup", handlers.TopUpHandler)
+		protected.POST("/payment", handlers.PaymentHandler)
+		protected.POST("/transfer", handlers.TransferHandler)
+		protected.GET("/transaction-report", handlers.TransactionReportHandler)
+		protected.PUT("/profile", handlers.UpdateProfileHandler)
+	}
 
 	return router
 }
